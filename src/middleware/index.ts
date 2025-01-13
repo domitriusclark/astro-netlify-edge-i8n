@@ -33,14 +33,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (currentPath === "/") {
-    if (currentLanguage) {
-      currentUrl.pathname = `/${currentLanguage}`;
-      return Response.redirect(currentUrl.toString(), 302);
-    } else {
-      const defaultLanguage = "en";
-      currentUrl.pathname = `/${defaultLanguage}`;
-      return Response.redirect(currentUrl.toString(), 302);
-    }
+    const languageToUse = currentLanguage || "en";
+    currentUrl.pathname = `/${languageToUse}`;
+    return Response.redirect(currentUrl.toString(), 302);
   }
 
   return next();

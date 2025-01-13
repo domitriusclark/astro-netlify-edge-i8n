@@ -10,28 +10,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const pathLanguage = getCurrentLanguage(currentPath);
 
   if (!currentLanguage && !pathLanguage) {
-    if (currentPath === "/" || currentPath === "") {
-      try {
-        const response = await fetch(`${currentUrl.origin}/get-location`);
-
-        const { language } = await response.json();
-
-        cookies.set("language", language, {
-          path: "/",
-          secure: true,
-          httpOnly: true,
-          sameSite: "strict",
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        });
-
-        currentUrl.pathname = `/${language}${currentPath}`;
-        return Response.redirect(currentUrl.toString(), 302);
-      } catch (error) {
-        console.error("Error detecting language:", error);
-        currentUrl.pathname = `/${SUPPORTED_LANGUAGES[0]}${currentPath}`;
-        return Response.redirect(currentUrl.toString(), 302);
-      }
-    }
     return next();
   }
 

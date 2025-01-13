@@ -10,4 +10,11 @@ export default defineConfig({
   output: "server",
   adapter: netlify(),
   integrations: [tailwind()],
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "ja", "es", "fr"],
+    routing: {
+      prefixDefaultLocale: true,
+    },
+  },
 });

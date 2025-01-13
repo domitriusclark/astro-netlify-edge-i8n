@@ -1,0 +1,129 @@
+---
+import { LANGUAGE_CONFIG } from "../config/i18n";
+import { getCurrentLanguage } from "../utils/i18n";
+
+const currentLang = getCurrentLanguage(Astro.url.pathname);
+const currentLanguageConfig = LANGUAGE_CONFIG.find(
+  (l) => l.code === currentLang
+)!;
+---
+
+<div class="inline-block relative text-left">
+  <button
+    type="button"
+    class="inline-flex items-center gap-2 border-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-2 border rounded-md text-sm"
+    id="language-menu-button"
+    aria-expanded="false"
+    aria-haspopup="true"
+  >
+    {currentLanguageConfig.flag}
+    {currentLanguageConfig.label}
+    <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+      <path
+        fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+        clip-rule="evenodd"></path>
+    </svg>
+  </button>
+
+  <div
+    class="right-0 z-10 absolute hidden bg-white dark:bg-gray-900/90 ring-opacity-5 shadow-lg mt-2 rounded-md ring-1 ring-black/5 w-40 origin-top-right focus:outline-none"
+    role="menu"
+    id="language-menu"
+    aria-orientation="vertical"
+    aria-labelledby="language-menu-button"
+  >
+    <div class="py-1" role="none">
+      {
+        LANGUAGE_CONFIG.map((lang) => (
+          <button
+            type="button"
+            class={`block w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-gray-100 ${
+              currentLang === lang.code
+                ? "font-bold bg-blue-50 dark:bg-blue-900/30"
+                : "hover:bg-blue-50/50 dark:hover:bg-blue-900/20"
+            }`}
+            data-lang={lang.code}
+            role="menuitem"
+          >
+            {lang.flag} {lang.label}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<script>
+  async function setLanguageCookie(lang: string): Promise<void> {
+    const response = await fetch("/get-location", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ language: lang }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to set language");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const menuButton = document.getElementById("language-menu-button");
+    const menu = document.getElementById("language-menu");
+    const languageButtons =
+      document.querySelectorAll<HTMLButtonElement>("button[data-lang]");
+
+    menuButton?.addEventListener("click", () => {
+      const isHidden = menu?.classList.contains("hidden");
+      if (isHidden) {
+        menu?.classList.remove("hidden");
+        menuButton.setAttribute("aria-expanded", "true");
+      } else {
+        menu?.classList.add("hidden");
+        menuButton.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (
+        !menuButton?.contains(event.target as Node) &&
+        !menu?.contains(event.target as Node)
+      ) {
+        menu?.classList.add("hidden");
+        menuButton?.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    languageButtons.forEach((button) => {
+      button.addEventListener("click", async (event: MouseEvent) => {
+        try {
+          const target = event.currentTarget as HTMLElement;
+          const lang = target.getAttribute("data-lang");
+          if (lang) {
+            button.disabled = true;
+            await setLanguageCookie(lang);
+
+            const languages = [
+              { code: "en", label: "English", flag: "🇬🇧" },
+              { code: "ja", label: "Japanese", flag: "🇯🇵" },
+            ];
+
+            const newPath = window.location.pathname.replace(
+              new RegExp(`^/(${languages.map((lang) => lang.code).join("|")})`),
+              `/${lang}`
+            );
+
+            window.location.href = newPath;
+          }
+        } catch (error) {
+          console.error("Error changing language:", error);
+          button.disabled = false;
+        }
+      });
+    });
+  });
+</script>
